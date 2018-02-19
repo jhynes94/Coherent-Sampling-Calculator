@@ -3,17 +3,13 @@
   <justinNav />
   <div class="container">
     <div class="row">
-
-
         <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
             <img src="../assets/equation.svg" alt="Kiwi standing on oval">
         </div>
-        <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
             <h1><input type="number" step=".0001" min="1" style="text-align: center;" v-model="Fs" placeholder="Sample Rate (Fs)"></h1>
             <h1><input type="number" step="1" min="1" style="text-align: center;" v-model="n" placeholder="Sample Size (n)"></h1>
             <h1><input type="number" step=".0001" min="1" style="text-align: center;" v-model="desiredFt" placeholder="Desired Freq (Ft)"></h1>
             <a @click="calculateFt()" class="btn btn-primary">Calculate Ft</a>
-            
             <h1 v-if="m != null">Bin Number: {{m}}</h1>
             <h1 v-if="AcutalFt != null">Actual Ft: {{AcutalFt}}</h1>
         </div>
@@ -77,10 +73,34 @@ export default {
                 this.m = m;
             }
         }
-
     },
+    primeRec(array, lowestPrimeIndex){
+        //Checks to see if index extends beyond array (pops back from recursion)
+        if(lowestPrimeIndex >= array.length){
+            return array;
+        }
 
+        //Filter out all numbers that can be divided by lowest prime index
+        array = array.filter(x => x%array[lowestPrimeIndex] != 0 || x == array[lowestPrimeIndex]);
+        
+        //Recursively calls function
+        array = this.primeRec(array, lowestPrimeIndex+1);
 
+        return array;
+    },
+    CalculatePrimeNumbers(primeRoof){
+        //Create array of all numbers up to roof
+        let arr = [];
+        for(let i=2; i < primeRoof; i++){
+            arr = arr.concat([i]);
+        }
+
+        //Removes all numbers but prime numbers
+        arr = this.primeRec(arr, 0)
+        
+        console.log(arr)
+        return(arr);
+    },
     AddWarning(warning) {
         this.error = warning;
         setTimeout(() => {this.AddWarning("")}, 5000);
@@ -94,6 +114,7 @@ export default {
     if (process.env.NODE_ENV === "development") {
       this.apiURL = "http://localhost:3000";
     }
+    this.CalculatePrimeNumbers(1000);
   },
   components: {
     justinNav
