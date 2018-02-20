@@ -1,28 +1,40 @@
 <template>
 <div>
-  <justinNav />
-  <div class="container">
-    <div class="row">
-        <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
-            <img src="../assets/equation.svg" alt="Kiwi standing on oval">
-        </div>
-            <h1><input type="number" step=".0001" min="1" style="text-align: center;" v-model="Fs" placeholder="Sample Rate (Fs)"></h1>
-            <h1><input type="number" step="1" min="1" style="text-align: center;" v-model="n" placeholder="Sample Size (n)"></h1>
-            <h1><input type="number" step=".0001" min="1" style="text-align: center;" v-model="desiredFt" placeholder="Desired Freq (Ft)"></h1>
-            <a @click="calculateFt()" class="btn btn-primary">Calculate Ft</a>
-            <h1 v-if="m != null">Bin Number: {{m}}</h1>
-            <h1 v-if="AcutalFt != null">Actual Ft: {{AcutalFt}}</h1>
+    <justinNav />
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
+                <img src="../assets/equation.svg" alt="Kiwi standing on oval">
+            </div>
+            <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
+                <h1><input v-on:keyup.enter="calculateFt()" type="number" step=".0001" min="1" style="text-align: center;" v-model="Fs" placeholder="Sample Rate (Fs)"></h1>
+                <h1><input v-on:keyup.enter="calculateFt()" type="number" step="1" min="1" style="text-align: center;" v-model="n" placeholder="Sample Size (n)"></h1>
+                <h1><input v-on:keyup.enter="calculateFt()" type="number" step=".0001" min="1" style="text-align: center;" v-model="desiredFt" placeholder="Desired Freq (Ft)"></h1>
+            </div>
+            
+            <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
+                <a @click="calculateFt()" class="btn btn-primary">Calculate Ft</a>
+            </div>
+
+            <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
+                <h1 v-if="m != null">Bin Number: {{m}}</h1>
+                <h1 v-if="AcutalFt != null">Actual Ft: {{AcutalFt}}</h1>
+            </div>
         </div>
 
-        <div>
+        <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
+            <img v-if="loading == true" src="../assets/loading3.gif" alt="loading"> 
+        </div>
+
+        <div class="row">
             <div v-if="success != ''" class="alert alert-success" role="alert">
                 {{ success }}
             </div>
             <div v-if="error != ''" class="alert alert-danger" role="alert">
                 {{ error }}
             </div>
-            <div v-if="information != ''">
-                <h3>Information: {{ information }}</h3>
+            <div  class="alert alert-success" v-if="information != ''">
+                <h3>{{ information }}</h3>
             </div>
         </div>
         <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
@@ -31,7 +43,7 @@
     </div>
     <div><p>This will find the closest prime bin to your Ft</p></div>
     <div>Site is in {{producion}} mode</div>    
-    <b-button class="glyphicon glyphicon-question-sign"></b-button>
+    <b-button @click="information = 'This was designed by Justin Hynes-Bruell with the mentorship of Richard Liggerio'" class="glyphicon glyphicon-question-sign"></b-button>
   </div>
 </div>
 </template>
@@ -53,26 +65,44 @@ export default {
       success: "",
       error: "",
       information: "",
+      loading: false,
     };
   },
   methods: {
     calculateFt: function() {
+        let Fs = this.Fs;
+        let n = this.n;
+        let m = this.m;
+        let desiredFt = this.desiredFt;
 
         //Verfiy Numbers
-        if(this.Fs == "" || this.n == "" || this.desiredFt == ""){
+        if(Fs == "" || n == "" || desiredFt == ""){
             this.AddWarning("Input Missing");
             return;
         }
+        this.loading = true;
 
-        //Vary m to get Ft close
+        //This equation is KING!
         //Ft=(m/n)*Fs
-        
-        for(let m=0; m < this.n; m++){
-            if(this.desiredFt > (m/this.n)*this.Fs){
-                this.AcutalFt = (m/this.n)*this.Fs;
-                this.m = m;
+
+        //Closest prime bin(b) to Ft  CONVERT THIS TO BE A BINARY SEARCH
+        let primeArray = this.CalculatePrimeNumbers(n);
+        for(let i=0; i < primeArray.length; i++){
+            if(desiredFt < (primeArray[i]/n)*Fs){
+                this.AcutalFt = (primeArray[i]/n)*Fs;
+                this.m = primeArray[i];
+                break;
             }
         }
+
+        //Closest Ft
+        /*for(let m=0; m < n; m++){
+            if(desiredFt > (m/n)*Fs){
+                AcutalFt = (m/n)*Fs;
+                m = m;
+            }
+        }*/
+        this.loading = false;
     },
     primeRec(array, lowestPrimeIndex){
         //Checks to see if index extends beyond array (pops back from recursion)
@@ -97,8 +127,7 @@ export default {
 
         //Removes all numbers but prime numbers
         arr = this.primeRec(arr, 0)
-        
-        console.log(arr)
+
         return(arr);
     },
     AddWarning(warning) {
@@ -106,7 +135,7 @@ export default {
         setTimeout(() => {this.AddWarning("")}, 5000);
     },
     AddInformation(inputInformation) {
-        this.information = "NEW INFORMATION!"
+        this.information = inputInformation;
     },
   },
   created: function() {
@@ -114,7 +143,14 @@ export default {
     if (process.env.NODE_ENV === "development") {
       this.apiURL = "http://localhost:3000";
     }
-    this.CalculatePrimeNumbers(1000);
+
+
+    //For testing purposes
+    this.Fs = 48000;
+    this.n = 13230;
+    this.desiredFt = 1000;
+    this.calculateFt();
+
   },
   components: {
     justinNav
