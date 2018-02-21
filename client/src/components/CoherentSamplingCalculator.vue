@@ -15,10 +15,23 @@
             <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
                 <a @click="calculateFt()" class="btn btn-primary">Calculate Ft</a>
             </div>
+        </div>
 
-            <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-4">
-                <h1 v-if="m != null">Bin Number: {{m}}</h1>
-                <h1 v-if="AcutalFt != null">Actual Ft: {{AcutalFt}}</h1>
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-4 text-center mb-4">
+                <h1>Best Prime Fit</h1>
+                <h2 v-if="mPrime != null">Bin: {{mPrime}}</h2>
+                <h2 v-if="AcutalFtPrime != null">Ft: {{AcutalFtPrime}}</h2>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-4 text-center mb-4">
+                <h1>Best Fit</h1>
+                <h2 v-if="mClosest != null">Bin: {{mClosest}}</h2>
+                <h2 v-if="AcutalFtClosest != null">Ft: {{AcutalFtClosest}}</h2>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-4 text-center mb-4">
+                <h1>Best Odd Fit</h1>
+                <h2 v-if="mOdd != null">Bin: {{mOdd}}</h2>
+                <h2 v-if="AcutalFtOdd != null">Ft: {{AcutalFtOdd}}</h2>
             </div>
         </div>
 
@@ -60,8 +73,14 @@ export default {
       Fs: "",
       n: "",
       desiredFt: "",
-      m: null,
-      AcutalFt: null,
+
+      mPrime: null,
+      AcutalFtPrime: null,
+      mClosest: null,
+      AcutalFtClosest: null,
+      mOdd: null,
+      AcutalFtOdd: null,
+      
       success: "",
       error: "",
       information: "",
@@ -72,7 +91,6 @@ export default {
     calculateFt: function() {
         let Fs = this.Fs;
         let n = this.n;
-        let m = this.m;
         let desiredFt = this.desiredFt;
 
         //Verfiy Numbers
@@ -84,25 +102,68 @@ export default {
 
         //This equation is KING!
         //Ft=(m/n)*Fs
+        setTimeout(() => {
+        //Best fit bin to Ft
+        let closestArray = [];
+        for(let m=1; m < n; m++){
+            closestArray = closestArray.concat([m])
+        }
+        this.mClosest = closestArray[this.BinarySeachFt(closestArray)];
+        this.AcutalFtClosest = (this.mClosest/n)*Fs;
 
-        //Closest prime bin(b) to Ft  CONVERT THIS TO BE A BINARY SEARCH
+        //Best fit odd bin to Ft
+        let oddArray = [];
+        for(let m=1; m < n; m+=2){
+            oddArray = oddArray.concat([m])
+        }
+        this.mOdd = oddArray[this.BinarySeachFt(oddArray)];
+        this.AcutalFtOdd = (this.mOdd/n)*Fs;
+
+
+        //Closest prime bin to Ft
         let primeArray = this.CalculatePrimeNumbers(n);
-        for(let i=0; i < primeArray.length; i++){
-            if(desiredFt < (primeArray[i]/n)*Fs){
-                this.AcutalFt = (primeArray[i]/n)*Fs;
-                this.m = primeArray[i];
-                break;
+        console.log(primeArray);
+        this.mPrime = primeArray[this.BinarySeachFt(primeArray)];
+        this.AcutalFtPrime = (this.mPrime/n)*Fs;
+
+
+        this.loading = false;
+
+        }, 200);
+    },
+    BinarySeachFt(array){
+        var minIndex = 0;
+        var maxIndex = array.length - 1;
+        var currentIndex;
+    
+        while (minIndex <= maxIndex) {
+            currentIndex = (minIndex + maxIndex) / 2 | 0;
+
+
+            let currentElement = (array[currentIndex]/this.n)*this.Fs;
+            let nextElement = (array[currentIndex+1]/this.n)*this.Fs;
+            let previousElement = (array[currentIndex-1]/this.n)*this.Fs;      
+
+            let currentElementDiff = Math.abs(currentElement-this.desiredFt);
+            let nextElementDiff = Math.abs(nextElement-this.desiredFt);
+            let previousElementDiff = Math.abs(previousElement-this.desiredFt);
+
+            // console.log("Next: " + nextElementDiff + " Index: " + (currentIndex+1) + " Bin Number: " + array[currentIndex+1]);
+            // console.log("Current: " + currentElementDiff + " Index: " + currentIndex + " Bin Number: " + array[currentIndex]);
+            // console.log("Previous: " + previousElementDiff + " Index: " + (currentIndex-1) + " Bin Number: " + array[currentIndex-1]);
+            
+            if(nextElementDiff < currentElementDiff) {
+                minIndex = currentIndex + 1;
+            }
+            else if(previousElementDiff < currentElementDiff){
+                maxIndex = currentIndex - 1;
+            }
+            else {
+                return currentIndex;
             }
         }
-
-        //Closest Ft
-        /*for(let m=0; m < n; m++){
-            if(desiredFt > (m/n)*Fs){
-                AcutalFt = (m/n)*Fs;
-                m = m;
-            }
-        }*/
-        this.loading = false;
+    
+        return -1;
     },
     primeRec(array, lowestPrimeIndex){
         //Checks to see if index extends beyond array (pops back from recursion)

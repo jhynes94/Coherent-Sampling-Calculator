@@ -1,6 +1,6 @@
-# nomsly-IMS
+# Coherent Capture
 
-Nomsly's client and frontend for gaugeing customer interaction and manageing supply chain
+Supports coherent captureing
 
 ## To Use
 
@@ -55,9 +55,7 @@ npm start
 
 ## Todo
 
-- Support Mongo Backend localy
-- Support GraphQL
-- Remove console.log's when going into production mode
+- 
 
 ## License
 
